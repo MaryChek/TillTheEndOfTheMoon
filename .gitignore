@@ -10,5 +10,6 @@ resources/
 notes.xml
 images.xml
 Карта\ городов/
-.kilo/
 docx_unpacked/
+test_chapter/docx_chapter.txt
+test_chapter/xml_chapter.txt

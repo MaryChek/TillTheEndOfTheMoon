@@ -1,0 +1,32 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "disabled_providers": [],
+  "permission": {
+    "bash": "allow",
+    "external_directory": {
+      "/Users/danilbelokurov/Downloads/Проекты/Светлый пепел луны/*": "allow",
+      "/tmp/*": "allow",
+      "/private/tmp/luna_docx/word/*": "allow",
+      "/Users/danilbelokurov/Downloads/Проекты/Светлый_пепел_луны/*": "allow",
+      "/Users/danilbelokurov/*": "allow",
+      "/var/folders/9s/878qgtlj2m57hp59r75jqwjm0000gn/T/*": "allow",
+      "/Users/danilbelokурок/Downloads/Проекты/Светлый_пепел_луны/*": "allow",
+      "/private/tmp/docx_unpacked/word/*": "allow"
+    }
+  },
+  "model": "minimax-coding-plan/MiniMax-M2.7",
+  "small_model": "minimax-coding-plan/MiniMax-M2",
+  "mcp": {
+    "mcp-xml": {
+      "type": "local",
+      "command": ["node", "/Users/danilbelokurov/node_modules/mcp-xml/dist/index.js"],
+      "enabled": true,
+      "timeout": 10000,
+      "env": {}
+    }
+  },
+  "skills": {
+    "paths": ["/Users/danilbelokurov/.kilo/skills"]
+  }
+}
+
