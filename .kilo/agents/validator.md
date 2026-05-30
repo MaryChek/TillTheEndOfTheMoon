@@ -58,51 +58,84 @@
 ### Check 1: Empty Line Spacing
 ```python
 def check_empty_line_spacing(xml_chapter):
+    """
+    Checks empty-line spacing according to template.md 2.4.1
+    Rules:
+    - dialogue → prose: needs <empty-line/> AFTER dialogue
+    - prose → dialogue: needs <empty-line/> AFTER prose
+    - dialogue → dialogue: NO <empty-line/>
+    - prose → prose: NO <empty-line/>
+    """
     errors = []
+    warnings = []
     lines = xml_chapter.split('\n')
 
     for i in range(len(lines) - 1):
         current = lines[i].strip()
         next_line = lines[i + 1].strip()
 
-        current_type = classify(current)
-        next_type = classify(next_line)
+        current_type = classify_line(current)
+        next_type = classify_line(next_line)
 
-        # dialogue → prose/thought: needs <empty-line/>
-        if current_type == 'dialogue' and next_type in ('prose', 'thought'):
-            if lines[i + 1] != '<empty-line/>':
-                errors.append(f"Строка {i}: dialogue → prose/thought нужна <empty-line/>")
+        # dialogue → prose: needs <empty-line/> AFTER
+        if current_type == 'dialogue' and next_type == 'prose':
+            if next_line != '<empty-line/>':
+                errors.append(f"Строка {i}: dialogue → prose нужна <empty-line/> после диалога")
 
-        # prose/thought → dialogue: needs <empty-line/>
-        if current_type in ('prose', 'thought') and next_type == 'dialogue':
-            if lines[i + 1] != '<empty-line/>':
-                errors.append(f"Строка {i}: prose/thought → dialogue нужна <empty-line/>")
+        # prose → dialogue: needs <empty-line/> AFTER prose
+        if current_type == 'prose' and next_type == 'dialogue':
+            if next_line != '<empty-line/>':
+                errors.append(f"Строка {i}: prose → dialogue нужна <empty-line/> после прозы")
 
         # dialogue → dialogue: NO <empty-line/>
         if current_type == 'dialogue' and next_type == 'dialogue':
-            if lines[i + 1] == '<empty-line/>':
+            if next_line == '<empty-line/>':
                 errors.append(f"Строка {i}: dialogue → dialogue НЕ нужна <empty-line/>")
 
-        # prose/thought → prose/thought: NO <empty-line/>
-        if current_type in ('prose', 'thought') and next_type in ('prose', 'thought'):
-            if lines[i + 1] == '<empty-line/>':
-                errors.append(f"Строка {i}: prose/thought → prose/thought НЕ нужна <empty-line/>")
+        # prose → prose: NO <empty-line/>
+        if current_type == 'prose' and next_type == 'prose':
+            if next_line == '<empty-line/>':
+                errors.append(f"Строка {i}: prose → prose НЕ нужна <empty-line/>")
 
-    return errors
+    return errors, warnings
 
 
-def classify(line):
-    if line.startswith('<p>—'):
+def is_compound_dialogue(line):
+    """
+    Returns True if line is a compound dialogue (multiple dialogue parts with author words).
+    Example: '<p>— Текст — автор — ещё текст</p>'
+    Has '— ' (em-dash + space) AFTER the opening '— '
+    """
+    if not line.strip().startswith('<p>—'):
+        return False
+
+    stripped = line.strip()
+
+    # Find first '— ' after '<p>'
+    first_marker = stripped.find('— ')
+    if first_marker == -1:
+        return False
+
+    # Find second '— ' after first
+    second_marker = stripped.find('— ', first_marker + 1)
+    return second_marker != -1
+
+
+def classify_line(line):
+    """
+    Classify line type for spacing rules.
+    """
+    stripped = line.strip()
+
+    if stripped.startswith('<p>—'):
         return 'dialogue'
-    elif '<emphasis>' in line:
-        return 'thought'
-    elif line.startswith('<p>'):
+    elif stripped.startswith('<p>'):
         return 'prose'
-    elif line.startswith('<subtitle>'):
+    elif stripped.startswith('<subtitle>'):
         return 'subtitle'
-    elif line.startswith('<image'):
+    elif stripped.startswith('<image'):
         return 'image'
-    elif line == '<empty-line/>':
+    elif stripped == '<empty-line/>':
         return 'empty'
     else:
         return 'other'
@@ -235,7 +268,9 @@ def validate_chapter(xml_path, docx_path, chapter_num, next_chapter_num, expecte
     xml_chapter = match.group(1)
 
     # Run all checks
-    errors.extend(check_empty_line_spacing(xml_chapter))
+    spacing_errors, spacing_warnings = check_empty_line_spacing(xml_chapter)
+    errors.extend(spacing_errors)
+    warnings.extend(spacing_warnings)
     errors.extend(check_emphasis_scope(xml_chapter))
     errors.extend(check_subtitle_image_spacing(xml_chapter))
     errors.extend(check_double_empty_lines(xml_chapter))
